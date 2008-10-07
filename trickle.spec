@@ -1,17 +1,21 @@
 # TODO:
-# - doesn't build
 # - iniscript needed
 # - split into client and daemon
 Summary:	portable lightweight userspace bandwidth shaper
 Name:		trickle
-Version:	1.06
-Release:	0.1
+Version:	1.07
+Release:	0.5
 License:	BSD
 Group:		Applications/Networking
 Source0:	http://www.monkey.org/~marius/trickle/%{name}-%{version}.tar.gz
-# Source0-md5:	8e9b7fcdd49ee8fb94700dd1653f5537
+# Source0-md5:	860ebc4abbbd82957c20a28bd9390d7d
+Patch0:		%{name}-build.patch
+Patch1:		%{name}-fwrite.patch
 URL:		http://www.monkey.org/~marius/trickle/
+BuildRequires:	autoconf
+BuildRequires:	automake
 BuildRequires:	libevent-devel
+BuildRequires:	libtool
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
@@ -28,15 +32,28 @@ and does not require root privileges.
 
 %prep
 %setup -q
+%patch0 -p1
+%patch1 -p1
 
 %build
+# ugly hack
+:> .c
+%{__libtoolize}
+%{__aclocal}
+%{__autoconf}
+%{__automake}
 %configure
 %{__make}
 
 %install
 rm -rf $RPM_BUILD_ROOT
+
+install -d $RPM_BUILD_ROOT%{_sysconfdir}
+
 %{__make} install \
 	DESTDIR="$RPM_BUILD_ROOT"
+
+install trickled.conf $RPM_BUILD_ROOT%{_sysconfdir}
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -44,10 +61,11 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(644,root,root,755)
 %doc LICENSE README TODO
-%{_mandir}/man1/trickle.1*
-%{_mandir}/man5/trickled.conf.5*
-%{_mandir}/man8/trickled.8*
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/trickled.conf
 %attr(755,root,root) %{_bindir}/trickle
 %attr(755,root,root) %{_bindir}/tricklectl
 %attr(755,root,root) %{_bindir}/trickled
-%{_libdir}/trickle/
+%attr(755,root,root) %{_libdir}/trickle
+%{_mandir}/man1/trickle.1*
+%{_mandir}/man5/trickled.conf.5*
+%{_mandir}/man8/trickled.8*
