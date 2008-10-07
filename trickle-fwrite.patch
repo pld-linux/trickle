@@ -1,0 +1,102 @@
+--- trickle-1.07.orig/trickle-overload.c
++++ trickle-1.07/trickle-overload.c
+@@ -144,6 +144,9 @@
+ DECLARE(sendfile, ssize_t, (int, int, off_t *, size_t));
+ #endif
+ 
++DECLARE(fread, size_t, (void *, size_t, size_t, FILE *));
++DECLARE(fwrite, size_t, (const void *, size_t, size_t, FILE *));
++
+ static int             delay(int, ssize_t *, short);
+ static struct timeval *getdelay(struct sockdesc *, ssize_t *, short);
+ static void            update(int, ssize_t, short);
+@@ -225,6 +228,9 @@
+ 	GETADDR(sendfile);
+ #endif
+ 
++	GETADDR(fread);
++	GETADDR(fwrite);
++
+ 	/* XXX pthread test */
+ /*  	if ((dh = dlopen("/usr/lib/libpthread.so.1.0", RTLD_LAZY)) == NULL) */
+ /* 		errx(1, "[trickle] Failed to open libpthread"); */
+@@ -302,7 +308,9 @@
+ 	    domain, type, protocol, sock);
+ #endif /* DEBUG */
+ 
+-	if (sock != -1 && domain == AF_INET && type == SOCK_STREAM) {
++	if (sock != -1 
++			&& (domain == AF_INET || domain == AF_INET6)
++			&& type == SOCK_STREAM) {
+ 		if ((sd = calloc(1, sizeof(*sd))) == NULL)
+ 			return (-1);
+ 		if ((sd->stat = bwstat_new()) == NULL) {
+@@ -1027,6 +1035,68 @@
+ }
+ #endif	/* HAVE_SENDFILE */
+ 
++size_t
++fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
++{
++	size_t ret = -1;
++	size_t xnbytes = size * nmemb;
++	int eagain;
++
++	INIT;
++
++	if (!(eagain = delay(fileno(stream), &xnbytes, TRICKLE_RECV) 
++				== TRICKLE_WOULDBLOCK)) {
++		ret = (*libc_fread)(ptr, size, nmemb, stream);
++#ifdef DEBUG
++		safe_printv(0, "[DEBUG] fread(%d, *, %d) = %d", fileno(stream), 
++				xnbytes, ret);
++	} else {
++		safe_printv(0, "[DEBUG] delaying fread(%d, *, %d) = %d", 
++				fileno(stream), xnbytes, ret);
++#endif /* DEBUG */
++	}
++
++	update(fileno(stream), ret, TRICKLE_RECV);
++
++	if (eagain) {
++		ret = -1;
++		errno = EAGAIN;
++	}
++
++	return (ret);
++}
++
++size_t
++fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream)
++{
++	size_t ret = -1;
++	size_t xlen = size * nmemb;
++	int eagain;
++
++	INIT;
++
++	if (!(eagain = delay(fileno(stream), &xlen, TRICKLE_SEND) 
++				== TRICKLE_WOULDBLOCK)) {
++		ret = (*libc_fwrite)(ptr, size, nmemb, stream);
++#ifdef DEBUG
++		safe_printv(0, "[DEBUG] fwrite(%d, *, %d) = %d", fileno(stream), 
++				xlen, ret);
++	} else {
++		safe_printv(0, "[DEBUG] delaying fwrite(%d, *, %d)", 
++				fileno(stream), xlen);
++#endif /* DEBUG */
++	}
++
++	update(fileno(stream), ret, TRICKLE_SEND);
++
++	if (eagain) {
++		errno = EAGAIN;
++		ret = -1;
++	}
++
++	return (ret);
++}
++
+ static int
+ delay(int sock, ssize_t *len, short which)
+ {
