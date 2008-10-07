@@ -1,0 +1,103 @@
+--- trickle-1.07.orig/Makefile.am	2004-07-07 09:57:37.000000000 +0200
++++ trickle-1.07/Makefile.am	2008-10-08 00:55:35.000000000 +0200
+@@ -28,12 +28,8 @@
+ tricklectl_SOURCES = tricklectl.c trickledu.c atomicio.c xdr.c
+ tricklectl_LDADD = @ERRO@ @LIBOBJS@
+ 
+-AM_CFLAGS += -Wall -Icompat @EVENTINC@
+-
+-overloaddir = $(libdir)
+-overload_DATA = libtrickle.so
++AM_CFLAGS = -Wall -Icompat @EVENTINC@
+ 
+-libtrickle.so: trickle-overload.c atomicio.c
+ $(overload_DATA):
+ 
+ CLEANFILES = *.so
+--- trickle-1.07.orig/Makefile.in
++++ trickle-1.07/Makefile.in
+@@ -64,31 +64,26 @@
+ host_triplet = @host@
+ target_alias = @target_alias@
+ target_triplet = @target@
+-AR = @AR@
+ AS = @AS@
+ CC = @CC@
+-CXX = @CXX@
+-CXXCPP = @CXXCPP@
+ DLLTOOL = @DLLTOOL@
+ ECHO = @ECHO@
+-EGREP = @EGREP@
+ ERRO = @ERRO@
+ EVENTINC = @EVENTINC@
+ EVENTLIB = @EVENTLIB@
+ EXEEXT = @EXEEXT@
+-F77 = @F77@
+-GCJ = @GCJ@
+-GCJFLAGS = @GCJFLAGS@
++HAVE_LIB = @HAVE_LIB@
++LIB = @LIB@
+ LIBDL = @LIBDL@
+ LIBTOOL = @LIBTOOL@
+ LN_S = @LN_S@
++LTLIB = @LTLIB@
+ LTLIBOBJS = @LTLIBOBJS@
+ MAKEINFO = @MAKEINFO@
+ OBJDUMP = @OBJDUMP@
+ OBJEXT = @OBJEXT@
+ PACKAGE = @PACKAGE@
+ RANLIB = @RANLIB@
+-RC = @RC@
+ STRIP = @STRIP@
+ VERSION = @VERSION@
+ 
+@@ -463,7 +458,7 @@
+ 	  awk '    { files[$$0] = 1; } \
+ 	       END { for (i in files) print i; }'`; \
+ 	test -z "$(ETAGS_ARGS)config.h.in$$unique$(LISP)$$tags" \
+-	  || (cd $(srcdir) && etags $(ETAGS_ARGS) $$tags config.h.in $$unique $(LISP) -o $$here/TAGS)
++	  || (cd $(srcdir) && etags -o $$here/TAGS $(ETAGS_ARGS) $$tags config.h.in $$unique $(LISP))
+ 
+ mostlyclean-tags:
+ 
+--- trickle-1.07.orig/config.h.in
++++ trickle-1.07/config.h.in
+@@ -128,9 +128,6 @@
+ /* Define to empty if `const' does not conform to ANSI C. */
+ #undef const
+ 
+-/* Define to `unsigned long' if <sys/types.h> does not define. */
+-#undef in_addr_t
+-
+ /* Define to `int' if <sys/types.h> does not define. */
+ #undef pid_t
+ 
+--- trickle-1.07.orig/configure.in
++++ trickle-1.07/configure.in
+@@ -67,8 +67,9 @@
+ AC_CHECK_TYPE(u_int32_t, unsigned int)
+ AC_CHECK_TYPE(u_int16_t, unsigned short)
+ AC_CHECK_TYPE(u_int8_t, unsigned char)
+-AC_CHECK_TYPE(in_addr_t, unsigned long)
+-
++AC_CHECK_TYPE(in_addr_t, , [AC_DEFINE(in_addr_t, unsigned long)], [AC_INCLUDES_DEFAULT
++#include <netinet/in.h>
++])
+ dnl Checks for library functions.
+ AC_PROG_GCC_TRADITIONAL
+ AC_TYPE_SIGNAL
+--- trickle-1.07.orig/trickled.conf
++++ trickle-1.07/trickled.conf
+@@ -0,0 +1,12 @@
++# this file is an example for a system-wide or personal settings file 
++# for trickle (see manual pages for trickle, trickled and trickled.conf
++# below are two examples that should be self-explaining
++
++# [ssh]
++# Priority = 1
++# Time-Smoothing = 0.1
++# Length-Smoothing = 2
++# [ftp]
++# Priority = 8
++# Time-Smoothing = 5
++# Length-Smoothing = 20
