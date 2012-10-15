@@ -1,0 +1,23 @@
+--- trickle-1.07/configure.in.libdir	2005-01-09 05:19:38.000000000 +0900
++++ trickle-1.07/configure.in	2008-06-17 00:16:32.000000000 +0900
+@@ -212,7 +212,7 @@
+     csysconfdir="$sysconfdir"
+ fi
+ 
+-clibdir="$prefix/lib/trickle"
++clibdir="$libdir/trickle"
+ 
+ AC_DEFINE_UNQUOTED(SYSCONFDIR, "$csysconfdir")
+ AC_DEFINE_UNQUOTED(LIBDIR, "$clibdir")
+--- trickle-1.07/configure.libdir	2005-01-09 05:20:06.000000000 +0900
++++ trickle-1.07/configure	2008-06-17 00:21:05.000000000 +0900
+@@ -21005,7 +21005,7 @@
+     csysconfdir="$sysconfdir"
+ fi
+ 
+-clibdir="$prefix/lib/trickle"
++clibdir="$libdir/trickle"
+ 
+ cat >>confdefs.h <<_ACEOF
+ #define SYSCONFDIR "$csysconfdir"
+

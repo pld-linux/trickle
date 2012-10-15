@@ -4,19 +4,26 @@
 Summary:	portable lightweight userspace bandwidth shaper
 Name:		trickle
 Version:	1.07
-Release:	0.5
+Release:	0.6
 License:	BSD
 Group:		Applications/Networking
 Source0:	http://www.monkey.org/~marius/trickle/%{name}-%{version}.tar.gz
 # Source0-md5:	860ebc4abbbd82957c20a28bd9390d7d
 Patch0:		%{name}-build.patch
 Patch1:		%{name}-fwrite.patch
+Patch2:		%{name}-1.07-CVE-2009-0415.patch
+Patch3:		%{name}-1.07-bwsta_getdelay-stop-if-no-packets.patch
+Patch4:		%{name}-1.07-include_netdb.patch
+Patch5:		%{name}-1.07-libdir.patch
 URL:		http://www.monkey.org/~marius/trickle/
 BuildRequires:	autoconf
 BuildRequires:	automake
 BuildRequires:	libevent-devel
 BuildRequires:	libtool
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
+
+# FIXME
+%define		filterout_c	-Werror=format-security
 
 %description
 trickle is a portable lightweight userspace bandwidth shaper. It can
@@ -34,6 +41,10 @@ and does not require root privileges.
 %setup -q
 %patch0 -p1
 %patch1 -p1
+%patch2 -p1
+%patch3 -p1
+%patch4 -p1
+%patch5 -p1
 
 %build
 # ugly hack
@@ -47,13 +58,12 @@ and does not require root privileges.
 
 %install
 rm -rf $RPM_BUILD_ROOT
-
 install -d $RPM_BUILD_ROOT%{_sysconfdir}
 
 %{__make} install \
 	DESTDIR="$RPM_BUILD_ROOT"
 
-install trickled.conf $RPM_BUILD_ROOT%{_sysconfdir}
+cp -p trickled.conf $RPM_BUILD_ROOT%{_sysconfdir}
 
 %clean
 rm -rf $RPM_BUILD_ROOT

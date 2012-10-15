@@ -1,0 +1,24 @@
+From 3b22c327ff6ac3ee51332919e91ae63d47225a9b Mon Sep 17 00:00:00 2001
+From: Alon Levy <alevy@redhat.com>
+Date: Thu, 15 Sep 2011 18:05:13 +0300
+Subject: [PATCH] bwsta_getdelay: stop if no packets
+
+---
+ bwstat.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/bwstat.c b/bwstat.c
+index a1c1085..9567275 100644
+--- a/bwstat.c
++++ b/bwstat.c
+@@ -210,7 +210,7 @@ bwstat_getdelay(struct bwstat *bs, size_t *len, uint lim, short which)
+ 
+ 			ent += xent;
+ 		}
+-	} while (pool > 0 && ncli > 0);
++	} while (pool > 0 && ncli > 0 && (TAILQ_FIRST(&poolq) != TAILQ_END(&poolq)));
+ 
+ 	/*
+ 	 * This is the case of a client that is not using its limit.
+-- 
+1.7.6.2
